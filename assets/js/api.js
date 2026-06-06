@@ -11,7 +11,7 @@ const API = (() => {
   // ============================================================
   const CONFIG = {
     // Setelah deploy Apps Script, paste URL-nya di sini
-    BASE_URL: localStorage.getItem('il_api_url') || 'https://script.google.com/macros/s/AKfycbyXq6M6gakT216NhOElk8VzJ4s7t4en7rhAcy7oJQKwrvk1-TdCCdv1-NIxFuBwpUgz/exec',
+    BASE_URL: localStorage.getItem('il_api_url') || 'https://script.google.com/macros/s/AKfycbzuQcGtLOE4jrJL5z43EloyQg0JquInnzqNiQv-F8wjt5S5zwYgCI5oklUY4QEJUeAJ/exec',
     TIMEOUT: 30000, // 30 detik
   };
 
@@ -31,7 +31,7 @@ const API = (() => {
   // CORE FETCH
   // ============================================================
   async function call(action, payload = {}) {
-    if (!CONFIG.BASE_URL || CONFIG.BASE_URL.includes('AKfycbyXq6M6gakT216NhOElk8VzJ4s7t4en7rhAcy7oJQKwrvk1-TdCCdv1-NIxFuBwpUgz')) {
+    if (!CONFIG.BASE_URL || CONFIG.BASE_URL.includes('YOUR_DEPLOYMENT_ID')) {
       throw new Error('API URL belum dikonfigurasi. Buka Settings untuk mengatur URL backend.');
     }
 
