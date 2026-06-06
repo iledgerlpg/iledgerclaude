@@ -6,7 +6,15 @@ let currentFilter = 'monthly';
 let trendChart, posChart, bbmChart, perawatanChart, pajakChart;
 
 // Init Jalur Utama
+// Di dashboard.js
 document.addEventListener('DOMContentLoaded', async () => {
+    const data = await callAPI('getDashboardData', { filter: 'monthly' });
+    if (data.success) {
+        // Karena _user sudah ter-inject ke window oleh api.js
+        document.getElementById('user-name').innerText = `Selamat Datang, ${window._user.name}`;
+        updateDashboardUI(data.data);
+    }
+});
   // 1. Muat komponen UI Navbar
   await loadNavbar();
   
