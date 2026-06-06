@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iLedgerV2 – Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- Nav will be injected by Nav.render() -->
+
+<header class="main-header" id="mainHeader">
+  <button class="header-toggle" onclick="Nav.toggleSidebar()">
+    <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="header-breadcrumb">
+    <span>iLedgerV2</span>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Dashboard</span>
+  </div>
+  <div class="header-company" id="headerCompany">
+    <span class="company-dot"></span>
+    <span id="companyName">Loading...</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="Nav.toggleTheme()" title="Toggle Dark Mode">
+      <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="main-content" id="mainContent">
+
+  <div class="page-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle" id="periodLabel">Memuat data...</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select class="form-control-m" style="width:140px;" id="periodFilter" onchange="loadDashboard()">
+          <option value="daily">Hari Ini</option>
+          <option value="weekly">Minggu Ini</option>
+          <option value="monthly" selected>Bulan Ini</option>
+          <option value="yearly">Tahun Ini</option>
+        </select>
+        <button class="btn btn-outline btn-sm" onclick="loadDashboard()">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid">
+    <!-- Skeleton -->
+    ${Array(6).fill('').map(() => `
+      <div class="kpi-card">
+        <div class="kpi-icon skeleton" style="width:44px;height:44px;border-radius:12px;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div class="skeleton" style="height:11px;width:80%;margin-bottom:8px"></div>
+          <div class="skeleton" style="height:20px;width:60%"></div>
+        </div>
+      </div>`).join('')}
+  </div>
+
+  <!-- Charts Row -->
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-top:24px" id="chartsRow">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Tren Pendapatan & Pengeluaran</span>
+        <select class="form-control-m" style="width:120px;padding:6px 10px;font-size:12px" onchange="loadTrendChart(this.value)">
+          <option value="">6 Bulan</option>
+          <option value="yearly">12 Bulan</option>
+        </select>
+      </div>
+      <div class="card-body">
+        <canvas id="trendChart" height="240"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Pengeluaran per Pos</span></div>
+      <div class="card-body">
+        <canvas id="posChart" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Row -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+    <!-- Pajak Reminders -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">⚠️ Pajak Akan Jatuh Tempo</span>
+        <a href="pajak.html" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:600">Lihat Semua</a>
+      </div>
+      <div class="card-body" id="pajakReminders">
+        <div class="skeleton" style="height:50px;margin-bottom:8px;border-radius:8px"></div>
+        <div class="skeleton" style="height:50px;border-radius:8px"></div>
+      </div>
+    </div>
+    <!-- Recent Transactions -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Transaksi Terakhir</span>
+        <a href="pengeluaran.html" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:600">Lihat Semua</a>
+      </div>
+      <div class="card-body" id="recentTransactions">
+        <div class="skeleton" style="height:40px;margin-bottom:8px;border-radius:6px"></div>
+        <div class="skeleton" style="height:40px;margin-bottom:8px;border-radius:6px"></div>
+        <div class="skeleton" style="height:40px;border-radius:6px"></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="assets/js/api.js"></script>
+<script src="assets/js/nav.js"></script>
+<script>
+// ============================================================
+// INIT
+// ============================================================
+if (!Nav.requireAuth()) { /* redirected */ }
+Nav.render('dashboard');
+
+let trendChart = null;
+let posChart = null;
+
+(async function init() {
+  await loadDashboard();
+  await loadPajakReminders();
+  loadSettings();
+})();
+
+// ============================================================
+// LOAD DASHBOARD
+// ============================================================
+async function loadDashboard() {
+  const period = document.getElementById('periodFilter').value;
+  try {
+    const result = await API.getDashboardData(period);
+    if (!result.success) { showToast(result.error, 'error'); return; }
+    renderKPIs(result.data.kpi);
+    renderTrendChart(result.data.trendData);
+    renderPosChart(result.data.pengeluaranByPos);
+    document.getElementById('periodLabel').textContent =
+      `Periode: ${result.data.startDate} – ${result.data.endDate}`;
+    renderRecentTransactions(result.data);
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+// ============================================================
+// KPI CARDS
+// ============================================================
+function renderKPIs(kpi) {
+  const items = [
+    {
+      label: 'Total Pendapatan', value: formatRupiah(kpi.totalPendapatan),
+      color: '#dcfce7', textColor: '#166534',
+      icon: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'
+    },
+    {
+      label: 'Total Pengeluaran', value: formatRupiah(kpi.totalPengeluaran),
+      color: '#fee2e2', textColor: '#991b1b',
+      icon: '<polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/>'
+    },
+    {
+      label: 'Laba Bersih', value: formatRupiah(kpi.labaBersih),
+      color: kpi.labaBersih >= 0 ? '#dbeafe' : '#fee2e2',
+      textColor: kpi.labaBersih >= 0 ? '#1e40af' : '#991b1b',
+      icon: '<line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="10"/><line x1="6" y1="20" x2="6" y2="14"/>'
+    },
+    {
+      label: 'Jumlah Armada', value: kpi.jumlahArmada + ' Unit',
+      color: '#fef3c7', textColor: '#92400e',
+      icon: '<rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>'
+    },
+    {
+      label: 'Jumlah Karyawan', value: kpi.jumlahKaryawan + ' Orang',
+      color: '#f3e8ff', textColor: '#6b21a8',
+      icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
+    },
+    {
+      label: 'BBM Bulan Ini', value: formatRupiah(kpi.bbmBulanIni),
+      color: '#fff7ed', textColor: '#9a3412',
+      icon: '<path d="M3 22V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v16"/><line x1="1" y1="22" x2="23" y2="22"/><rect x="6" y="9" width="5" height="4"/>'
+    }
+  ];
+
+  document.getElementById('kpiGrid').innerHTML = items.map(item => `
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:${item.color}">
+        <svg viewBox="0 0 24 24" style="stroke:${item.textColor}">${item.icon}</svg>
+      </div>
+      <div>
+        <div class="kpi-label">${item.label}</div>
+        <div class="kpi-value sm">${item.value}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+function renderTrendChart(data) {
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  if (trendChart) trendChart.destroy();
+
+  trendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.months,
+      datasets: [
+        {
+          label: 'Pendapatan',
+          data: data.pendapatanData,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16,185,129,.1)',
+          fill: true, tension: .4, pointRadius: 4,
+        },
+        {
+          label: 'Pengeluaran',
+          data: data.pengeluaranData,
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,.1)',
+          fill: true, tension: .4, pointRadius: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } } },
+      scales: {
+        y: { ticks: { callback: v => 'Rp ' + (v/1000000).toFixed(1) + 'Jt', font: { size: 11 } } },
+        x: { ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+function renderPosChart(posData) {
+  const ctx = document.getElementById('posChart').getContext('2d');
+  if (posChart) posChart.destroy();
+
+  if (!posData || posData.length === 0) {
+    ctx.canvas.parentElement.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:60px 0;font-size:13px">Belum ada data</p>';
+    return;
+  }
+
+  const colors = ['#0D47A1','#1565C0','#00BCD4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+
+  posChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: posData.map(p => p.pos),
+      datasets: [{
+        data: posData.map(p => p.total),
+        backgroundColor: colors.slice(0, posData.length),
+        borderWidth: 2, borderColor: 'var(--bg-card)'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 }, padding: 12 } },
+        tooltip: { callbacks: { label: ctx => ` ${formatRupiah(ctx.parsed)}` } }
+      }
+    }
+  });
+}
+
+async function loadTrendChart(period) {
+  try {
+    const result = await API.getDashboardCharts('labarugi', period || '');
+    if (result.success) renderTrendChart({
+      months: result.data.labels,
+      pendapatanData: result.data.pendapatan,
+      pengeluaranData: result.data.pengeluaran
+    });
+  } catch (e) {}
+}
+
+// ============================================================
+// PAJAK REMINDERS
+// ============================================================
+async function loadPajakReminders() {
+  try {
+    const result = await API.getPajakReminders();
+    const el = document.getElementById('pajakReminders');
+
+    if (!result.success || result.data.length === 0) {
+      el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-secondary);font-size:13px">
+        <div style="font-size:24px;margin-bottom:8px">✅</div>Semua pajak dalam status aman
+      </div>`;
+      return;
+    }
+
+    el.innerHTML = result.data.slice(0, 4).map(r => {
+      const badge = r.statusSTNK === 'TERLAMBAT' || r.statusKIR === 'TERLAMBAT'
+        ? `<span class="badge badge-error">Terlambat</span>`
+        : `<span class="badge badge-warning">Segera</span>`;
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-color)">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${r.noPolisi}</div>
+            <div style="font-size:11px;color:var(--text-secondary)">STNK: ${r.tanggalSTNK} | KIR: ${r.tanggalKIR || '-'}</div>
+          </div>
+          ${badge}
+        </div>`;
+    }).join('');
+
+    // Show badge on nav
+    const badge = document.getElementById('pajakBadge');
+    if (badge) { badge.style.display = 'inline'; badge.textContent = result.data.length; }
+
+  } catch (e) {}
+}
+
+// ============================================================
+// RECENT TRANSACTIONS
+// ============================================================
+function renderRecentTransactions(data) {
+  const el = document.getElementById('recentTransactions');
+  // Use pengeluaranByPos as proxy for recent data
+  if (!data.pengeluaranByPos || data.pengeluaranByPos.length === 0) {
+    el.innerHTML = `<p style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px">Belum ada transaksi</p>`;
+    return;
+  }
+  el.innerHTML = data.pengeluaranByPos.slice(0, 5).map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border-color)">
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${p.pos}</div>
+        <div style="font-size:11px;color:var(--text-secondary)">Periode ini</div>
+      </div>
+      <span style="font-size:13px;font-weight:700;color:var(--error)">${formatRupiah(p.total)}</span>
+    </div>`).join('');
+}
+
+// ============================================================
+// LOAD COMPANY NAME FROM SETTINGS
+// ============================================================
+async function loadSettings() {
+  try {
+    const result = await API.getSettings();
+    if (result.success && result.data.COMPANY_NAME) {
+      document.getElementById('companyName').textContent = result.data.COMPANY_NAME;
+    }
+  } catch (e) {}
+}
+</script>
+</body>
+</html>
