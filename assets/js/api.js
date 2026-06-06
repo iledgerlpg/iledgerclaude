@@ -11,7 +11,7 @@ const API = (() => {
   // ============================================================
   const CONFIG = {
     // Setelah deploy Apps Script, paste URL-nya di sini
-    BASE_URL: localStorage.getItem('il_api_url') || 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',
+    BASE_URL: localStorage.getItem('il_api_url') || 'https://script.google.com/macros/s/AKfycbxpmoFUfa_BEwp-EiNjB7u0i6T3xT3vp_Mo9jgI-2N73qxaYcUzStypGUY1sQlHDGW0/exec',
     TIMEOUT: 30000, // 30 detik
   };
 
