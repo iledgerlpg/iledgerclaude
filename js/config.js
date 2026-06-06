@@ -1,4 +1,6 @@
-// js/config.js
+// ============================================================
+// js/config.js - Global Configuration
+// ============================================================
 
 window.APP_URL = 'https://script.google.com/macros/s/AKfycbwqI576-UPMnoaQyKBiLWprQ4OR-c8Jpexw_vKtjKJ-RMGUO8nYfuOQ0s1xhlF55Fcb/exec';
 
@@ -6,8 +8,10 @@ window.APP_URL = 'https://script.google.com/macros/s/AKfycbwqI576-UPMnoaQyKBiLWp
 const path = window.location.pathname;
 const page = path.split("/").pop().replace(".html", "");
 window.CURRENT_PAGE = page || "index"; // default ke index kalau kosong
+
+
 // ============================================================
-// js/api.js - Core API Caller (Anti-CORS Version)
+// js/api.js - Core API Caller (Super Steril Anti-CORS Version)
 // ============================================================
 
 async function callAPI(action, data = {}) {
@@ -25,13 +29,11 @@ async function callAPI(action, data = {}) {
       ...data
     };
 
+    // 🔥 ANTI-CORS TANPA HEADERS: Sengaja tidak menulis properti headers kustom 
+    // agar browser langsung mengirim data sebagai POST murni tanpa pemicu request OPTIONS (Preflight)
     const response = await fetch(window.APP_URL, {
       method: 'POST',
-      // 🔥 KUNCI UTAMA ANTI-CORS: Pakai text/plain agar browser langsung nembak tanpa request OPTIONS
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify(payload) // Payload dikonversi jadi string JSON
+      body: JSON.stringify(payload) // Payload langsung diubah menjadi string JSON biasa
     });
 
     if (!response.ok) {
