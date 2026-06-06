@@ -1,252 +1,112 @@
-// navbar.js
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. INJECT CSS KE HEAD
+  // 1. INJECT STYLESHEET
   const style = document.createElement("style");
   style.textContent = `
-    :root {
-      --primary:#0D47A1;--primary-light:#1565C0;--primary-dark:#0a3880;
-      --accent:#00BCD4;--sidebar-width:260px;--header-height:64px;
-      --white:#ffffff;--gray-50:#f8fafc;--gray-100:#f1f5f9;
-      --gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-600:#475569;--gray-800:#1e293b;
-      --success:#10b981;--error:#ef4444;--warning:#f59e0b;--info:#3b82f6;
-      --radius:10px;--radius-lg:16px;
-      --shadow-sm:0 1px 3px rgba(0,0,0,.08);
-      --shadow-md:0 4px 16px rgba(0,0,0,.1);
-      --font:'Plus Jakarta Sans',sans-serif;
-      --bg-body:#f0f4f8;--bg-card:#ffffff;--text-primary:#1e293b;
-      --text-secondary:#475569;--border-color:#e2e8f0;
-    }
-    [data-theme="dark"]{
-      --bg-body:#0f172a;--bg-card:#1e293b;--text-primary:#f1f5f9;
-      --text-secondary:#94a3b8;--border-color:#334155;
-      --gray-50:#1e293b;--gray-100:#273549;--gray-200:#334155;
-    }
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    body {
-      font-family:var(--font);background:var(--bg-body);
-      color:var(--text-primary);min-height:100vh;
-      transition:background .3s,color .3s;
-    }
-    .sidebar {
-      position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-width);
-      background:linear-gradient(180deg,var(--primary-dark) 0%,var(--primary) 100%);
-      z-index:200;display:flex;flex-direction:column;
-      transform:translateX(0);transition:transform .3s cubic-bezier(0.4,0,0.2,1);
-      box-shadow:4px 0 20px rgba(13,71,161,.3);
-    }
+    :root { --primary:#0D47A1; --primary-dark:#0a3880; --accent:#00BCD4; --sidebar-width:260px; --header-height:64px; --bg-body:#f0f4f8; --bg-card:#ffffff; --text-primary:#1e293b; --text-secondary:#475569; --border-color:#e2e8f0; }
+    [data-theme="dark"] { --bg-body:#0f172a; --bg-card:#1e293b; --text-primary:#f1f5f9; --text-secondary:#94a3b8; --border-color:#334155; }
+    
+    /* Layout */
+    .sidebar { position:fixed; top:0; left:0; bottom:0; width:var(--sidebar-width); background:linear-gradient(180deg, var(--primary-dark) 0%, var(--primary) 100%); z-index:200; transition:transform .3s cubic-bezier(0.4,0,0.2,1); box-shadow:4px 0 20px rgba(13,71,161,.3); }
     .sidebar.collapsed { transform:translateX(-100%); }
-    .sidebar-brand { padding:20px 20px 0;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:20px; }
-    .brand-icon { width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.2);flex-shrink:0; }
-    .brand-icon svg { width:22px;height:22px;fill:white; }
-    .brand-text h1 { font-size:18px;font-weight:800;color:white;letter-spacing:-.3px; }
-    .brand-text p { font-size:10px;color:rgba(255,255,255,.55);font-weight:400;margin-top:1px; }
-    .sidebar-user { padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:12px; }
-    .user-avatar { width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#0288D1);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;flex-shrink:0; }
-    .user-info .user-name { font-size:13px;font-weight:600;color:white;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-    .user-info .user-role { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:2px 8px;border-radius:10px;margin-top:3px;display:inline-block; }
-    .role-hrd { background:rgba(0,188,212,.25);color:#4DD0E1; }
-    .role-admin { background:rgba(255,255,255,.15);color:rgba(255,255,255,.8); }
-    .sidebar-nav { flex:1;overflow-y:auto;padding:12px 0; }
-    .nav-section-label { font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.4);padding:10px 20px 4px; }
-    .nav-item { display:flex;align-items:center;gap:12px;padding:10px 20px;cursor:pointer;color:rgba(255,255,255,.7);font-size:13.5px;font-weight:500;text-decoration:none;transition:all .2s;position:relative;margin:1px 8px;border-radius:8px; }
-    .nav-item:hover { background:rgba(255,255,255,.1);color:white; }
-    .nav-item.active { background:rgba(255,255,255,.18);color:white;font-weight:600;box-shadow:inset 3px 0 0 var(--accent); }
-    .nav-item.active::before { content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:var(--accent); }
-    .nav-icon { width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0; }
-    .sidebar-footer { padding:12px 8px;border-top:1px solid rgba(255,255,255,.1); }
-    .nav-logout { display:flex;align-items:center;gap:12px;width:100%;padding:10px 20px;background:rgba(239,68,68,.15);color:rgba(255,180,180,.9);border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;border-radius:8px;transition:all .2s; }
-    .nav-logout:hover { background:rgba(239,68,68,.25);color:white; }
-    .main-header { position:fixed;top:0;left:var(--sidebar-width);right:0;height:var(--header-height);background:var(--bg-card);border-bottom:1px solid var(--border-color);display:flex;align-items:center;padding:0 24px;z-index:100;transition:left .3s;box-shadow:var(--shadow-sm);gap:16px; }
+    .main-header { position:fixed; top:0; left:var(--sidebar-width); right:0; height:var(--header-height); background:var(--bg-card); border-bottom:1px solid var(--border-color); display:flex; align-items:center; padding:0 24px; z-index:100; transition:all .3s; }
     .main-header.full { left:0; }
-    .header-toggle { width:36px;height:36px;border-radius:8px;background:transparent;border:1.5px solid var(--border-color);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:all .2s;flex-shrink:0; }
-    .header-toggle:hover { background:var(--gray-100);color:var(--text-primary); }
-    .header-toggle svg { width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2; }
-    .header-breadcrumb { flex:1;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);text-transform: capitalize; }
-    .breadcrumb-sep { color:var(--border-color); }
-    .breadcrumb-current { font-weight:600;color:var(--text-primary); }
-    .header-actions { display:flex;align-items:center;gap:8px; }
-    .header-btn { width:36px;height:36px;border-radius:8px;background:transparent;border:1.5px solid var(--border-color);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);transition:all .2s;position:relative; }
-    .header-btn:hover { background:var(--gray-100);color:var(--text-primary); }
-    .header-btn svg { width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2; }
-    .header-company { display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--border-color);font-size:12px;font-weight:600;color:var(--text-secondary);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-    .company-dot { width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0; }
-    .sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:150; }
-    .toast-container { position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px; }
-    .toast { padding:12px 18px;border-radius:10px;font-size:13px;font-weight:500;color:white;display:flex;align-items:center;gap:10px;min-width:280px;max-width:360px;animation:toastIn .3s cubic-bezier(0.16,1,0.3,1);box-shadow:0 8px 24px rgba(0,0,0,.2); }
-    @keyframes toastIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
-    .toast-success{background:#166534;border:1px solid rgba(16,185,129,.3)}
-    .toast-error{background:#991b1b;border:1px solid rgba(239,68,68,.3)}
-    .toast svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.5;flex-shrink:0}
-    .toast-close{margin-left:auto;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.7);padding:0 0 0 6px}
-    @media(max-width:768px){
-      .sidebar{transform:translateX(-100%);width:280px}
-      .sidebar.open{transform:translateX(0)}
-      .sidebar-overlay.show{display:block}
-      .main-header{left:0 !important}
-      .main-content{margin-left:0 !important;padding:16px}
-    }
+    
+    /* Toast Styles */
+    .toast-container { position:fixed; top:80px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+    .toast { padding:12px 18px; border-radius:10px; font-size:13px; font-weight:500; color:white; display:flex; align-items:center; gap:10px; min-width:280px; animation:toastIn .3s; box-shadow:0 8px 24px rgba(0,0,0,.2); }
+    @keyframes toastIn { from { opacity:0; transform:translateX(50px); } to { opacity:1; transform:translateX(0); } }
+    .toast-success { background:#166534; } .toast-error { background:#991b1b; }
+    
+    @media(max-width:768px){ .sidebar { transform:translateX(-100%); } .sidebar.open { transform:translateX(0); } .main-header { left:0 !important; } }
   `;
   document.head.appendChild(style);
 
-  // 2. INJECT HTML COMPONENT KE CONTAINER
+  // 2. INJECT HTML
   const container = document.getElementById("navbarContainer");
   if (!container) return;
-
   container.innerHTML = `
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 32 32"><path d="M4 4h10v10H4zm14 0h10v10H18zM4 18h10v10H4zm14 0h10v10H18z" opacity=".4"/><path d="M6 6h6v6H6zm14 0h6v6h-6zM6 20h6v6H6zm14 0h6v6h-6z"/></svg>
-        </div>
-        <div class="brand-text">
-          <h1>iLedgerV2</h1>
-          <p>Fleet Management System</p>
-        </div>
+        <div class="brand-icon"><svg viewBox="0 0 32 32"><path d="M4 4h10v10H4zm14 0h10v10H18zM4 18h10v10H4zm14 0h10v10H18z" fill="white"/></svg></div>
+        <div class="brand-text"><h1>iLedgerV2</h1><p>Fleet Management System</p></div>
       </div>
       <div class="sidebar-user">
         <div class="user-avatar" id="userAvatar">--</div>
         <div class="user-info">
           <div class="user-name" id="userName">Loading...</div>
-          <span class="user-role role-hrd" id="userRole">HRD</span>
+          <span class="user-role" id="userRole">--</span>
         </div>
       </div>
-      <nav class="sidebar-nav">
-        <span class="nav-section-label">Utama</span>
-        <a href="#" class="nav-item" data-page="dashboard" onclick="navigate('dashboard')">
-          <svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-          Dashboard
-        </a>
-        <span class="nav-section-label">Transaksi</span>
-        <a href="#" class="nav-item" data-page="pemasukan" onclick="navigate('pemasukan')">
-          <svg class="nav-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-          Pendapatan
-        </a>
-        <a href="#" class="nav-item" data-page="pengeluaran" onclick="navigate('pengeluaran')">
-          <svg class="nav-icon" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-          Pengeluaran
-        </a>
-        <span class="nav-section-label">Armada</span>
-        <a href="#" class="nav-item" data-page="armada" onclick="navigate('armada')">
-          <svg class="nav-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          Data Armada
-        </a>
-        <div id="hrdMenus">
-          <span class="nav-section-label">Administrasi</span>
-          <a href="#" class="nav-item" data-page="user-management" onclick="navigate('user-management')">
-            <svg class="nav-icon" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-            User Management
-          </a>
+      <nav class="sidebar-nav" id="sidebarNav">
+        <a href="#" class="nav-item" data-page="dashboard" onclick="navigate('dashboard')">Dashboard</a>
+        <a href="#" class="nav-item" data-page="pemasukan" onclick="navigate('pemasukan')">Pendapatan</a>
+        <a href="#" class="nav-item" data-page="pengeluaran" onclick="navigate('pengeluaran')">Pengeluaran</a>
+        <div id="hrdMenus"><span class="nav-section-label">Admin</span>
+          <a href="#" class="nav-item" data-page="user-management" onclick="navigate('user-management')">Users</a>
         </div>
       </nav>
-      <div class="sidebar-footer">
-        <button class="nav-logout" onclick="handleLogout()">
-          <svg style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Logout
-        </button>
-      </div>
+      <div class="sidebar-footer"><button class="nav-logout" onclick="handleLogout()">Logout</button></div>
     </aside>
 
-    <!-- Header Navbar -->
     <header class="main-header" id="mainHeader">
-      <button class="header-toggle" onclick="toggleSidebar()">
-        <svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="header-breadcrumb">
-        <span>Sistem</span>
-        <span class="breadcrumb-sep">/</span>
-        <span class="breadcrumb-current" id="breadcrumbCurrent">Memuat...</span>
-      </div>
+      <button class="header-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="header-breadcrumb" id="breadcrumbCurrent">Dashboard</div>
       <div class="header-actions">
-        <div class="header-company">
-          <span class="company-dot"></span>
-          <span id="companyName">PT Enterprise</span>
-        </div>
-        <button class="header-btn" onclick="toggleTheme()" title="Ubah Tema">
-          <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-        </button>
-        <button class="header-btn" id="btnNotif" title="Notifikasi">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="notif-dot" id="notifDot" style="display:none"></span>
-        </button>
+        <button class="header-btn" onclick="toggleTheme()">🌙</button>
+        <button class="header-btn" id="btnNotif">🔔<span id="notifDot" style="display:none"></span></button>
       </div>
     </header>
-
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
     <div class="toast-container" id="toastContainer"></div>
   `;
 
-  // 3. RUN LOGIC INTERNAL NAVBAR
-  const _token = localStorage.getItem('il_token');
-  const _user = JSON.parse(localStorage.getItem('il_user') || '{}');
+  // 3. INITIALIZE USER SESSION
+  const user = JSON.parse(localStorage.getItem('il_user') || '{}');
+  if (!localStorage.getItem('il_token')) window.location.href = 'login.html';
 
-  if (!_token) { window.location.href = 'login.html'; return; }
-
-  if (_user.name) {
-    document.getElementById('userName').textContent = _user.name;
-    document.getElementById('userAvatar').textContent = _user.name.charAt(0).toUpperCase();
-    document.getElementById('userRole').textContent = _user.role || 'ADMIN';
-    document.getElementById('userRole').className = 'user-role ' + (_user.role === 'HRD' ? 'role-hrd' : 'role-admin');
+  if (user.name) {
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('userAvatar').textContent = user.name.charAt(0);
+    document.getElementById('userRole').textContent = user.role;
+    if (user.role !== 'HRD') document.getElementById('hrdMenus').style.display = 'none';
   }
 
-  if (_user.role !== 'HRD') {
-    const hrdMenus = document.getElementById('hrdMenus');
-    if (hrdMenus) hrdMenus.style.display = 'none';
-  }
-
-  const currentPage = window.CURRENT_PAGE || 'dashboard';
-  document.getElementById('breadcrumbCurrent').textContent = currentPage;
-  
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.page === currentPage);
-  });
+  // Active Menu Highlight
+  const page = window.CURRENT_PAGE || 'dashboard';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.page === page));
 });
 
-// 4. GLOBAL COMPONENT FUNCTIONS (Biar onclick di HTML tetep jalan)
-window.navigate = function(page) {
-  window.location.href = page + '.html';
-}
+// 4. GLOBAL HELPERS
+window.navigate = (page) => window.location.href = page + '.html';
 
-window.toggleSidebar = function() {
+window.toggleSidebar = () => {
   const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebarOverlay');
   const header = document.getElementById('mainHeader');
-  const content = document.getElementById('mainContent');
-
   if (window.innerWidth <= 768) {
     sidebar.classList.toggle('open');
-    overlay.classList.toggle('show');
   } else {
     sidebar.classList.toggle('collapsed');
-    header && header.classList.toggle('full');
-    content && content.classList.toggle('full');
+    header.classList.toggle('full');
   }
-}
+};
 
-window.handleLogout = async function() {
-  const APP_URL = window.APP_URL || 'https://script.google.com/macros/s/AKfycbyUj-_hBNw2LFuWjxSf0fxrp85Q67qIBryWG-FFsBYZWNxYbI3-AC084jVTjKmDtPL5/exec';
-  const _token = localStorage.getItem('il_token');
-  try {
-    await fetch(APP_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'logout', token: _token })
-    });
-  } catch(e) {}
+window.showToast = (msg, type = 'success') => {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `<span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4000);
+};
+
+window.handleLogout = async () => {
   localStorage.removeItem('il_token');
   localStorage.removeItem('il_user');
   window.location.href = 'login.html';
-}
+};
 
-window.toggleTheme = function() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
+window.toggleTheme = () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('il_theme', next);
-}
-
-// Auto load theme
-(function applyTheme(){
-  const saved = localStorage.getItem('il_theme');
-  if (saved) document.documentElement.setAttribute('data-theme', saved);
-})();
+};
