@@ -9,12 +9,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
-<!-- Taruh config.js di paling atas agar window.CURRENT_PAGE terbaca lebih dulu -->
+<!-- Konfigurasi halaman & global URL -->
 <script src="config.js"></script>
+
+<!-- PANGGIL SCRIPT NAVBAR DI SINI (Otomatis bikin sidebar & topbar) -->
+<script src="navbar.js"></script>
+
+<!-- Script khusus logic dashboard -->
 <script src="dashboard.js" defer></script>
 
 <style>
-/* Style spesifik untuk halaman dashboard */
+/* Style spesifik halaman dashboard */
 .filter-tabs{display:flex;gap:6px;margin-bottom:24px;background:var(--bg-card);padding:4px;border-radius:10px;border:1px solid var(--border-color);width:fit-content}
 .filter-tab{padding:7px 18px;border-radius:7px;border:none;background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;color:var(--text-secondary);transition:all .2s}
 .filter-tab.active{background:var(--primary);color:white;box-shadow:0 2px 8px rgba(13,71,161,.3)}
@@ -68,13 +73,8 @@
 </head>
 <body>
 
-<!-- panggil komponen navbar gabungan via Apps Script include -->
-<?!= include('navbar'); ?>
-
-<!-- 
-  Header lama yang hardcode di sini dicopot total, 
-  karena strukturnya sudah otomatis di-render oleh file navbar di atas.
--->
+<!-- Tempat menaruh komponen navbar dinamis -->
+<div id="navbarContainer"></div>
 
 <main class="main-content" id="mainContent">
 
