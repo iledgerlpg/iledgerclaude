@@ -256,11 +256,23 @@ body {
     <span class="breadcrumb-current" id="breadcrumbCurrent">Memuat...</span>
   </div>
   
-  <div class="header-actions">
-    <div class="header-company">
-      <span class="company-dot"></span>
-      <span id="headerCompanyName">PT Enterprise</span>
-    </div>
+<div class="header-actions">
+  <!-- ID disesuaikan jadi companyName agar dibaca dashboard.js -->
+  <div class="header-company">
+    <span class="company-dot"></span>
+    <span id="companyName">PT Enterprise</span>
+  </div>
+  
+  <button class="header-btn" onclick="toggleTheme()" title="Ubah Tema">
+    <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+
+  <!-- Tombol Notifikasi bawaan dashboard dimasukkan ke sini -->
+  <button class="header-btn" id="btnNotif" title="Notifikasi">
+    <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+    <span class="notif-dot" id="notifDot" style="display:none"></span>
+  </button>
+</div>
     
     <button class="header-btn" onclick="toggleTheme()" title="Ubah Tema">
       <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
