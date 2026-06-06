@@ -2,7 +2,7 @@
 // js/config.js - Global Configuration
 // ============================================================
 
-window.APP_URL = 'https://script.google.com/macros/s/AKfycbyLSXR2qitFBVBpwLsYjfIov3tt0IaL5_IxbWbGbj1qiLm597O1BdGf4Xmn6npzrtqs/exec';
+window.APP_URL = 'https://script.google.com/macros/s/AKfycbwrCmjKwC-224C3LkEbgkYaZhUSTqqAHuPqbJ1PXBBUYDf4_g3VnwGISTwAGG4bTDmG/exec';
 
 // Deteksi nama halaman otomatis dari URL (misal: "dashboard.html" -> "dashboard")
 const path = window.location.pathname;
