@@ -1,6 +1,6 @@
 // js/config.js
 
-window.APP_URL = 'https://script.google.com/macros/s/AKfycbzExUurBZQTlNlAzKZLCZZqYMmib2-hE2AL_O2APD58rZuQUB_BEGD-G6LofTXCcbe1/exec';
+window.APP_URL = 'https://script.google.com/macros/s/AKfycbwqI576-UPMnoaQyKBiLWprQ4OR-c8Jpexw_vKtjKJ-RMGUO8nYfuOQ0s1xhlF55Fcb/exec';
 
 // Deteksi nama halaman otomatis dari URL (misal: "dashboard.html" -> "dashboard")
 const path = window.location.pathname;
