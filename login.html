@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0D47A1">
+<title>iLedgerV2 – Login</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#0D47A1;--primary-light:#1565C0;--primary-dark:#0a3880;
+  --accent:#00BCD4;--accent-light:#4DD0E1;
+  --white:#ffffff;--gray-50:#f8fafc;--gray-100:#f1f5f9;
+  --gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-600:#475569;--gray-800:#1e293b;
+  --success:#10b981;--error:#ef4444;--warning:#f59e0b;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.12);
+  --shadow-md:0 4px 24px rgba(13,71,161,.15);
+  --shadow-lg:0 20px 60px rgba(13,71,161,.2);
+  --radius:12px;--radius-lg:20px;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+body{
+  font-family:var(--font);min-height:100vh;
+  background:linear-gradient(135deg,#0D47A1 0%,#1565C0 40%,#0288D1 100%);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;overflow:hidden;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;
+}
+
+/* Floating geometric shapes */
+.bg-shape{position:fixed;border-radius:50%;pointer-events:none;z-index:0;opacity:.08}
+.bg-shape-1{width:500px;height:500px;background:white;top:-200px;right:-150px;animation:float1 8s ease-in-out infinite}
+.bg-shape-2{width:300px;height:300px;background:white;bottom:-100px;left:-100px;animation:float2 10s ease-in-out infinite}
+.bg-shape-3{width:200px;height:200px;background:var(--accent);top:50%;left:-80px;animation:float3 6s ease-in-out infinite;opacity:.12}
+@keyframes float1{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(30px) scale(1.05)}}
+@keyframes float2{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-20px) rotate(5deg)}}
+@keyframes float3{0%,100%{transform:translateX(0) translateY(0)}50%{transform:translateX(15px) translateY(-15px)}}
+
+.login-wrapper{
+  position:relative;z-index:1;width:100%;max-width:460px;
+  animation:slideUp .6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+
+.login-card{
+  background:rgba(255,255,255,.97);
+  backdrop-filter:blur(20px);
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg),0 0 0 1px rgba(255,255,255,.3);
+  overflow:hidden;
+}
+
+.login-header{
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+  padding:36px 40px 32px;text-align:center;
+  position:relative;overflow:hidden;
+}
+.login-header::after{
+  content:'';position:absolute;bottom:-30px;left:-10%;width:120%;height:60px;
+  background:rgba(255,255,255,.97);border-radius:50%;
+}
+.logo-icon{
+  width:60px;height:60px;background:rgba(255,255,255,.15);
+  border-radius:16px;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;border:1px solid rgba(255,255,255,.25);
+}
+.logo-icon svg{width:32px;height:32px;fill:white}
+.login-header h1{color:white;font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:4px}
+.login-header p{color:rgba(255,255,255,.75);font-size:13px;font-weight:400}
+
+.login-body{padding:36px 40px 40px}
+
+.form-group{margin-bottom:20px;position:relative}
+.form-label{
+  display:block;font-size:13px;font-weight:600;
+  color:var(--gray-600);margin-bottom:8px;letter-spacing:.2px;
+}
+.input-wrapper{position:relative}
+.input-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:var(--gray-400);pointer-events:none;
+}
+.input-icon svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.form-control{
+  width:100%;padding:12px 16px 12px 44px;
+  border:1.5px solid var(--gray-200);border-radius:var(--radius);
+  font-family:var(--font);font-size:14px;color:var(--gray-800);
+  background:var(--gray-50);transition:all .2s ease;outline:none;
+}
+.form-control:focus{
+  border-color:var(--primary);background:white;
+  box-shadow:0 0 0 3px rgba(13,71,161,.1);
+}
+.form-control.error{border-color:var(--error);background:#fff5f5}
+.form-control::placeholder{color:var(--gray-400)}
+
+.password-toggle{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  background:none;border:none;cursor:pointer;padding:4px;
+  color:var(--gray-400);transition:color .2s;
+}
+.password-toggle:hover{color:var(--primary)}
+.password-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+
+.form-options{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.checkbox-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--gray-600)}
+.checkbox-label input[type=checkbox]{
+  width:16px;height:16px;accent-color:var(--primary);cursor:pointer;
+}
+.forgot-link{
+  font-size:13px;font-weight:600;color:var(--primary);
+  text-decoration:none;transition:color .2s;
+}
+.forgot-link:hover{color:var(--primary-dark)}
+
+.btn-primary{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-light) 100%);
+  color:white;border:none;border-radius:var(--radius);
+  font-family:var(--font);font-size:15px;font-weight:700;
+  cursor:pointer;transition:all .25s ease;letter-spacing:.2px;
+  position:relative;overflow:hidden;
+}
+.btn-primary::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(13,71,161,.4)}
+.btn-primary:hover::after{opacity:1}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.7;cursor:not-allowed;transform:none}
+
+.btn-spinner{
+  display:none;align-items:center;justify-content:center;gap:8px;
+}
+.btn-spinner.show{display:flex}
+.btn-text.hide{display:none}
+.spinner{
+  width:18px;height:18px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:white;border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.divider{
+  display:flex;align-items:center;gap:12px;margin:24px 0;
+}
+.divider-line{flex:1;height:1px;background:var(--gray-200)}
+.divider-text{font-size:12px;color:var(--gray-400);font-weight:500;white-space:nowrap}
+
+.btn-register{
+  width:100%;padding:13px;
+  background:transparent;color:var(--primary);
+  border:1.5px solid var(--primary-light);border-radius:var(--radius);
+  font-family:var(--font);font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .2s ease;
+}
+.btn-register:hover{background:rgba(13,71,161,.05);transform:translateY(-1px)}
+
+.alert{
+  padding:12px 16px;border-radius:10px;
+  font-size:13px;font-weight:500;margin-bottom:20px;
+  display:flex;align-items:flex-start;gap:10px;
+  animation:fadeIn .3s ease;
+}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.alert-error{background:#fef2f2;color:#b91c1c;border:1px solid #fee2e2}
+.alert-success{background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.alert-warning{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.alert svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;stroke:currentColor;fill:none;stroke-width:2}
+
+.login-footer{
+  text-align:center;margin-top:24px;
+  font-size:12px;color:var(--gray-400);
+}
+
+/* Loading overlay */
+.page-loader{
+  position:fixed;inset:0;background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;transition:opacity .4s ease;
+}
+.page-loader.hidden{opacity:0;pointer-events:none}
+.loader-content{text-align:center;color:white}
+.loader-logo{font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:20px}
+.loader-bar{
+  width:200px;height:3px;background:rgba(255,255,255,.2);
+  border-radius:2px;overflow:hidden;margin:0 auto;
+}
+.loader-bar-fill{
+  height:100%;background:white;border-radius:2px;
+  animation:loadBar 1.2s ease-in-out forwards;
+}
+@keyframes loadBar{from{width:0}to{width:100%}}
+
+/* Toast */
+.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px}
+.toast{
+  padding:12px 20px;border-radius:10px;
+  font-size:14px;font-weight:500;color:white;
+  display:flex;align-items:center;gap:10px;
+  animation:toastIn .3s cubic-bezier(0.16,1,0.3,1);
+  box-shadow:0 8px 24px rgba(0,0,0,.2);min-width:280px;
+}
+@keyframes toastIn{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+.toast-success{background:var(--success)}
+.toast-error{background:var(--error)}
+.toast-warning{background:var(--warning)}
+
+@media(max-width:480px){
+  .login-body{padding:28px 24px 32px}
+  .login-header{padding:28px 24px 28px}
+}
+</style>
+</head>
+<body>
+
+<div class="page-loader" id="pageLoader">
+  <div class="loader-content">
+    <div class="loader-logo">iLedgerV2</div>
+    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+  </div>
+</div>
+
+<div class="bg-shape bg-shape-1"></div>
+<div class="bg-shape bg-shape-2"></div>
+<div class="bg-shape bg-shape-3"></div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="login-wrapper">
+  <div class="login-card">
+
+    <div class="login-header">
+      <div class="logo-icon">
+        <svg viewBox="0 0 32 32"><path d="M4 4h10v10H4zm14 0h10v10H18zM4 18h10v10H4zm14 0h10v10H18z" opacity=".4"/><path d="M6 6h6v6H6zm14 0h6v6h-6zM6 20h6v6H6zm14 0h6v6h-6z"/></svg>
+      </div>
+      <h1>iLedgerV2</h1>
+      <p>Sistem Manajemen Keuangan Enterprise</p>
+    </div>
+
+    <div class="login-body">
+
+      <div id="alertArea"></div>
+
+      <div id="formLogin">
+        <div class="form-group">
+          <label class="form-label" for="email">Email</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+            </span>
+            <input type="email" id="email" class="form-control" placeholder="email@perusahaan.com" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <div class="input-wrapper">
+            <span class="input-icon">
+              <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <input type="password" id="password" class="form-control" placeholder="Masukkan password" autocomplete="current-password">
+            <button class="password-toggle" type="button" onclick="togglePassword('password', this)">
+              <svg id="eyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="rememberMe">
+            Ingat saya 30 hari
+          </label>
+          <a href="forgot-password.html" class="forgot-link">Lupa password?</a>
+        </div>
+
+        <button class="btn-primary" id="btnLogin" onclick="handleLogin()">
+          <span class="btn-text">Masuk</span>
+          <span class="btn-spinner" id="loginSpinner">
+            <span class="spinner"></span> Memverifikasi...
+          </span>
+        </button>
+
+        <div class="divider">
+          <div class="divider-line"></div>
+          <span class="divider-text">Belum punya akun PT?</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <button class="btn-register" onclick="window.location.href='register.html'">
+          Daftar Perusahaan Baru
+        </button>
+      </div>
+
+      <div class="login-footer">
+        <p>© 2024 iLedgerV2 · Enterprise Fleet Management System · v2.0</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Pastikan URL di bawah ini mengarah ke deployment backend Apps Script yang terbaru
+const APP_URL = 'https://script.google.com/macros/s/AKfycbyUj-_hBNw2LFuWjxSf0fxrp85Q67qIBryWG-FFsBYZWNxYbI3-AC084jVTjKmDtPL5/exec';
+
+// Hide loader after page ready
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('pageLoader').classList.add('hidden');
+  }, 800);
+});
+
+// Check if already logged in (Sekarang routing ke HTML lokal)
+(function(){
+  const token = localStorage.getItem('il_token');
+  if (token) {
+    // Sesuaikan dengan nama file dashboard lu
+    window.location.href = 'dashboard.html'; 
+  }
+})();
+
+// Toggle password visibility
+function togglePassword(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  btn.querySelector('svg').innerHTML = isText
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+// Handle Enter key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleLogin();
+});
+
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const rememberMe = document.getElementById('rememberMe').checked;
+
+  clearAlert();
+
+  // Validate
+  if (!email) { showAlert('Email wajib diisi.', 'error'); return; }
+  if (!password) { showAlert('Password wajib diisi.', 'error'); return; }
+
+  setLoading(true);
+
+  try {
+    const res = await callAPI('login', { email, password, rememberMe });
+
+    if (res.success) {
+      // Save session
+      localStorage.setItem('il_token', res.token);
+      localStorage.setItem('il_user', JSON.stringify(res.user));
+
+      showAlert('Login berhasil! Memuat dashboard...', 'success');
+      setTimeout(() => {
+        // Routing ke HTML lokal
+        window.location.href = 'dashboard.html';
+      }, 800);
+    } else {
+      const code = res.code;
+      if (code === 'PENDING_APPROVAL') {
+        showAlert('<strong>Akun Menunggu Approval</strong><br>HRD belum menyetujui akun Anda.', 'warning');
+      } else {
+        showAlert(res.error || 'Login gagal.', 'error');
+        document.getElementById('password').classList.add('error');
+        setTimeout(() => document.getElementById('password').classList.remove('error'), 2000);
+      }
+    }
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    showAlert('Gagal terhubung ke server.', 'error');
+  }
+
+  setLoading(false);
+}
+
+function setLoading(state) {
+  const btn = document.getElementById('btnLogin');
+  const text = btn.querySelector('.btn-text');
+  const spinner = document.getElementById('loginSpinner');
+  btn.disabled = state;
+  text.classList.toggle('hide', state);
+  spinner.classList.toggle('show', state);
+}
+
+function showAlert(msg, type) {
+  const icons = {
+    error: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+    success: '<polyline points="20 6 9 17 4 12"/>',
+    warning: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/>'
+  };
+  document.getElementById('alertArea').innerHTML = `
+    <div class="alert alert-${type}">
+      <svg viewBox="0 0 24 24">${icons[type]||icons.error}</svg>
+      <span>${msg}</span>
+    </div>`;
+}
+
+function clearAlert() {
+  document.getElementById('alertArea').innerHTML = '';
+}
+
+// MENGHINDARI CORS ERROR PADA GOOGLE APPS SCRIPT
+function callAPI(action, payload) {
+  return fetch(APP_URL, {
+    method: 'POST',
+    // PENTING: Ubah application/json jadi text/plain biar tidak kena block CORS
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action, ...payload })
+  }).then(r => r.json());
+}
+
+function showToast(msg, type='success') {
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = msg;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+</script>
+</body>
+</html>
