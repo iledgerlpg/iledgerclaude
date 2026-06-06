@@ -46,16 +46,13 @@ async function loadNavbar() {
 
 async function loadDashboard() {
   try {
-    // Memanggil API Backend Apps Script secara pararel (Efisiensi Tinggi)
-    const [dashData, pajakData] = await Promise.all([
+    const [dashData, pajakData, chartData] = await Promise.all([
       callAPI('getDashboardData', { filter: currentFilter }),
-      callAPI('getPajakReminders', {})
-    ]).catch(err => {
-      throw new Error("Gagal melakukan jabat tangan pararel ke Apps Script: " + err.message);
-    });
+      callAPI('getPajakReminders', {}),
+      callAPI('getDashboardCharts', { chartType: 'labarugi', period: currentFilter })
+    ]);
 
-    // Proses Data Core Dashboard & Chart Utama
-    if (dashData && dashData.success) {
+    if (dashData.success) {
       renderKPIs(dashData.data.kpi);
       renderPosChart(dashData.data.pengeluaranByPos);
       renderTrendChart(dashData.data.trendData);
@@ -63,52 +60,113 @@ async function loadDashboard() {
       document.getElementById('lastUpdated').textContent = 
         'Diperbarui: ' + new Date().toLocaleTimeString('id-ID');
       
-      // Set ucapan selamat & nama user berdasarkan session global data
-      if (window._user && window._user.name) {
+      // Set company name
+      if (_user.name) {
         const hour = new Date().getHours();
         const greeting = hour < 12 ? 'Selamat pagi' : hour < 18 ? 'Selamat siang' : 'Selamat malam';
         document.getElementById('dashboardSubtitle').textContent = 
-          `${greeting}, ${window._user.name.split(' ')[0]}! Berikut ringkasan bisnis Anda.`;
+          `${greeting}, ${_user.name.split(' ')[0]}! Berikut ringkasan bisnis Anda.`;
       }
-    } else {
-      console.warn("Dashboard data merespon negatif:", dashData);
     }
 
-    // Proses Notifikasi Pajak
-    if (pajakData && pajakData.success) {
+    if (pajakData.success) {
       renderReminders(pajakData.data);
       if (pajakData.data.length > 0) {
-        const notif = document.getElementById('notifDot');
-        if (notif) notif.style.display = 'block';
+        document.getElementById('notifDot').style.display = 'block';
       }
     }
 
-    // Eksekusi load grafik sekunder (BBM, Perawatan, Pajak)
-    await loadCharts();
+    // Load additional charts
+    loadCharts();
 
   } catch (err) {
-    if (typeof showToast === 'function') showToast('Gagal memuat data dashboard.', 'error');
-    console.error("[Dashboard Error]", err);
+    showToast('Gagal memuat data dashboard.', 'error');
+    console.error(err);
   }
 }
 
 // ============================================================
-// RENDER CHARTS (Chart.js Integrations)
+// RENDER KPIs
+// ============================================================
+function renderKPIs(kpi) {
+  const cards = [
+    {
+      label: 'Total Pendapatan',
+      value: formatRupiah(kpi.totalPendapatan),
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
+      bg: '#DBEAFE', color: '#1D4ED8',
+    },
+    {
+      label: 'Total Pengeluaran',
+      value: formatRupiah(kpi.totalPengeluaran),
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`,
+      bg: '#FEE2E2', color: '#DC2626',
+    },
+    {
+      label: 'Laba Bersih',
+      value: formatRupiah(kpi.labaBersih),
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
+      bg: kpi.labaBersih >= 0 ? '#DCFCE7' : '#FEE2E2',
+      color: kpi.labaBersih >= 0 ? '#16A34A' : '#DC2626',
+    },
+    {
+      label: 'Jumlah Armada',
+      value: kpi.jumlahArmada + ' Unit',
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+      bg: '#FEF3C7', color: '#D97706',
+    },
+    {
+      label: 'Jumlah Karyawan',
+      value: kpi.jumlahKaryawan + ' Orang',
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
+      bg: '#F0FDF4', color: '#16A34A',
+    },
+    {
+      label: 'BBM Bulan Ini',
+      value: formatRupiah(kpi.bbmBulanIni),
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 22V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v16"/><rect x="6" y="9" width="5" height="4"/></svg>`,
+      bg: '#FFF7ED', color: '#EA580C',
+    },
+    {
+      label: 'Pengeluaran Bulan Ini',
+      value: formatRupiah(kpi.pengeluaranBulanIni),
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>`,
+      bg: '#F5F3FF', color: '#7C3AED',
+    },
+    {
+      label: 'Periode',
+      value: ['Harian','Mingguan','Bulanan','Tahunan'][['daily','weekly','monthly','yearly'].indexOf(currentFilter)],
+      icon: `<svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`,
+      bg: '#EFF6FF', color: '#2563EB',
+    }
+  ];
+
+  document.getElementById('kpiGrid').innerHTML = cards.map(c => `
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:${c.bg};color:${c.color}">${c.icon}</div>
+      <div>
+        <div class="kpi-label">${c.label}</div>
+        <div class="kpi-value sm">${c.value}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// RENDER CHARTS
 // ============================================================
 function renderTrendChart(trendData) {
-  const el = document.getElementById('chartTrend');
-  if (!el || !trendData) return;
-  const ctx = el.getContext('2d');
+  const ctx = document.getElementById('chartTrend').getContext('2d');
   if (trendChart) trendChart.destroy();
 
   trendChart = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: trendData.months || [],
+      labels: trendData.months,
       datasets: [
         {
           label: 'Pendapatan',
-          data: trendData.pendapatanData || [],
+          data: trendData.pendapatanData,
           borderColor: '#10b981',
           backgroundColor: 'rgba(16,185,129,.08)',
           fill: true,
@@ -118,7 +176,7 @@ function renderTrendChart(trendData) {
         },
         {
           label: 'Pengeluaran',
-          data: trendData.pengeluaranData || [],
+          data: trendData.pengeluaranData,
           borderColor: '#ef4444',
           backgroundColor: 'rgba(239,68,68,.08)',
           fill: true,
@@ -133,7 +191,11 @@ function renderTrendChart(trendData) {
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' } } },
-        tooltip: { callbacks: { label: (ctx) => ' ' + ctx.dataset.label + ': ' + formatRupiah(ctx.parsed.y) } }
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ' ' + ctx.dataset.label + ': ' + formatRupiah(ctx.parsed.y)
+          }
+        }
       },
       scales: {
         x: { grid: { display: false }, ticks: { font: { size: 11 } } },
@@ -147,13 +209,11 @@ function renderTrendChart(trendData) {
 }
 
 function renderPosChart(posData) {
-  const el = document.getElementById('chartPosDonut');
-  if (!el) return;
-  const ctx = el.getContext('2d');
+  const ctx = document.getElementById('chartPosDonut').getContext('2d');
   if (posChart) posChart.destroy();
   
   if (!posData || posData.length === 0) {
-    ctx.font = '13px Plus Jakarta Sans';
+    document.getElementById('chartPosDonut').getContext('2d').font = '13px Plus Jakarta Sans';
     return;
   }
 
@@ -189,34 +249,31 @@ async function loadCharts() {
       callAPI('getDashboardCharts', { chartType: 'pajak', period: currentFilter })
     ]);
 
-    if (bbmData && bbmData.success) renderBBMChart(bbmData.data);
-    if (perawatanData && perawatanData.success) renderPerawatanChart(perawatanData.data);
-    if (pajakData && pajakData.success) renderPajakChart(pajakData.data);
+    if (bbmData.success) renderBBMChart(bbmData.data);
+    if (perawatanData.success) renderPerawatanChart(perawatanData.data);
+    if (pajakData.success) renderPajakChart(pajakData.data);
 
   } catch (err) {
-    console.error('Gagal memuat sub-charts pendukung:', err);
+    console.error('loadCharts error', err);
   }
 }
 
 function renderBBMChart(data) {
-  const el = document.getElementById('chartBBM');
-  if (!el || !data) return;
-  const ctx = el.getContext('2d');
+  const ctx = document.getElementById('chartBBM').getContext('2d');
   if (bbmChart) bbmChart.destroy();
-  
   bbmChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: data.labels || [],
+      labels: data.labels,
       datasets: [{
         label: 'Liter',
-        data: data.liter || [],
+        data: data.liter,
         backgroundColor: 'rgba(251,146,60,.7)',
         borderRadius: 4,
         yAxisID: 'y'
       }, {
         label: 'Biaya',
-        data: data.biaya || [],
+        data: data.biaya,
         type: 'line',
         borderColor: '#0D47A1',
         backgroundColor: 'transparent',
@@ -237,17 +294,14 @@ function renderBBMChart(data) {
 }
 
 function renderPerawatanChart(data) {
-  const el = document.getElementById('chartPerawatan');
-  if (!el || !data) return;
-  const ctx = el.getContext('2d');
+  const ctx = document.getElementById('chartPerawatan').getContext('2d');
   if (perawatanChart) perawatanChart.destroy();
-  
   const colors = ['#0D47A1','#1976D2','#42A5F5','#00BCD4','#4DB6AC','#AED581'];
   perawatanChart = new Chart(ctx, {
     type: 'polarArea',
     data: {
-      labels: data.labels || [],
-      datasets: [{ data: data.values || [], backgroundColor: colors.map(c => c + 'CC') }]
+      labels: data.labels,
+      datasets: [{ data: data.values, backgroundColor: colors.map(c => c + 'CC') }]
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -257,17 +311,14 @@ function renderPerawatanChart(data) {
 }
 
 function renderPajakChart(data) {
-  const el = document.getElementById('chartPajak');
-  if (!el || !data) return;
-  const ctx = el.getContext('2d');
+  const ctx = document.getElementById('chartPajak').getContext('2d');
   if (pajakChart) pajakChart.destroy();
-  
   pajakChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
       labels: ['Aman', 'Segera Jatuh Tempo', 'Terlambat'],
       datasets: [{
-        data: [data.aman || 0, data.segeraJatuhTempo || 0, data.terlambat || 0],
+        data: [data.aman, data.segeraJatuhTempo, data.terlambat],
         backgroundColor: ['#10b981','#f59e0b','#ef4444'],
         borderWidth: 2, borderColor: '#fff'
       }]
@@ -283,39 +334,10 @@ function renderPajakChart(data) {
 }
 
 // ============================================================
-// RENDER DATA LIST & METRICS
+// RENDER REMINDERS
 // ============================================================
-function renderKPIs(kpi) {
-  if (!kpi) return;
-  const cards = [
-    { label: 'Total Pendapatan', value: formatRupiah(kpi.totalPendapatan), icon: `<svg class="nav-icon" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`, bg: '#DBEAFE', color: '#1D4ED8' },
-    { label: 'Total Pengeluaran', value: formatRupiah(kpi.totalPengeluaran), icon: `<svg class="nav-icon" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>`, bg: '#FEE2E2', color: '#DC2626' },
-    { label: 'Laba Bersih', value: formatRupiah(kpi.labaBersih), icon: `<svg class="nav-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`, bg: kpi.labaBersih >= 0 ? '#DCFCE7' : '#FEE2E2', color: kpi.labaBersih >= 0 ? '#16A34A' : '#DC2626' },
-    { label: 'Jumlah Armada', value: (kpi.jumlahArmada || 0) + ' Unit', icon: `<svg class="nav-icon" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`, bg: '#FEF3C7', color: '#D97706' },
-    { label: 'Jumlah Karyawan', value: (kpi.jumlahKaryawan || 0) + ' Orang', icon: `<svg class="nav-icon" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`, bg: '#F0FDF4', color: '#16A34A' },
-    { label: 'BBM Bulan Ini', value: formatRupiah(kpi.bbmBulanIni), icon: `<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 22V6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v16"/><rect x="6" y="9" width="5" height="4"/></svg>`, bg: '#FFF7ED', color: '#EA580C' },
-    { label: 'Pengeluaran Bulan Ini', value: formatRupiah(kpi.pengeluaranBulanIni), icon: `<svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>`, bg: '#F5F3FF', color: '#7C3AED' },
-    { label: 'Periode', value: ['Harian','Mingguan','Bulanan','Tahunan'][['daily','weekly','monthly','yearly'].indexOf(currentFilter)], icon: `<svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`, bg: '#EFF6FF', color: '#2563EB' }
-  ];
-
-  const grid = document.getElementById('kpiGrid');
-  if (grid) {
-    grid.innerHTML = cards.map(c => `
-      <div class="kpi-card">
-        <div class="kpi-icon" style="background:${c.bg};color:${c.color}">${c.icon}</div>
-        <div>
-          <div class="kpi-label">${c.label}</div>
-          <div class="kpi-value sm">${c.value}</div>
-        </div>
-      </div>
-    `).join('');
-  }
-}
-
 function renderReminders(reminders) {
   const el = document.getElementById('reminderList');
-  if (!el) return;
-  
   if (!reminders || reminders.length === 0) {
     el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px">✅ Tidak ada reminder pajak saat ini</div>';
     return;
@@ -341,7 +363,7 @@ function renderReminders(reminders) {
 }
 
 // ============================================================
-// FILTER & GLOBAL ACTIONS
+// FILTER
 // ============================================================
 function setFilter(filter) {
   currentFilter = filter;
